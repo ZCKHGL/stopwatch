@@ -37,6 +37,15 @@ class _StopwatchScreenState extends State<StopwatchScreen> {
   Timer? _timer;
   int _milliseconds = 0;
   bool _isRunning = false;
+  List<int> _laps = [];
+
+  void _addLap() {
+    if (_isRunning) {
+      setState(() {
+        _laps.insert(0, _milliseconds);
+      });
+    }
+  }
 
   void _startStop() {
     if (_isRunning) {
@@ -58,6 +67,7 @@ class _StopwatchScreenState extends State<StopwatchScreen> {
     setState(() {
       _milliseconds = 0;
       _isRunning = false;
+      _laps.clear();
     });
   }
 
@@ -65,6 +75,14 @@ class _StopwatchScreenState extends State<StopwatchScreen> {
     int minutes = (_milliseconds ~/ 60000);
     int seconds = ((_milliseconds % 60000) ~/ 1000);
     int milliseconds = ((_milliseconds % 1000) ~/ 10);
+
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}:${milliseconds.toString().padLeft(2, '0')}';
+  }
+
+  String _formatLapTime(int ms) {
+    int minutes = (ms ~/ 60000);
+    int seconds = ((ms % 60000) ~/ 1000);
+    int milliseconds = ((ms % 1000) ~/ 10);
 
     return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}:${milliseconds.toString().padLeft(2, '0')}';
   }
@@ -103,7 +121,7 @@ class _StopwatchScreenState extends State<StopwatchScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Spacer(flex: 2),
+                const Spacer(flex: 1),
 
                 // Stopwatch Display
                 Container(
@@ -164,7 +182,79 @@ class _StopwatchScreenState extends State<StopwatchScreen> {
                   ),
                 ),
 
-                const Spacer(flex: 2),
+                const Spacer(flex: 1),
+
+                // Lap Times Display
+                if (_laps.isNotEmpty)
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 40),
+                    height: 150,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1A1A1A).withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: const Color(0xFF00E5FF).withOpacity(0.1),
+                        width: 1,
+                      ),
+                    ),
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(12),
+                      itemCount: _laps.length,
+                      itemBuilder: (context, index) {
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0A0A0A).withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: const Color(0xFF00E5FF).withOpacity(0.1),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.flag_rounded,
+                                    color: const Color(
+                                      0xFF00E5FF,
+                                    ).withOpacity(0.6),
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Lap ${_laps.length - index}',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: const Color(0xFF666666),
+                                      letterSpacing: 1,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Text(
+                                _formatLapTime(_laps[index]),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: const Color(0xFF00E5FF),
+                                  fontWeight: FontWeight.w300,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+
+                const Spacer(flex: 1),
 
                 // Control Buttons
                 Padding(
@@ -178,6 +268,16 @@ class _StopwatchScreenState extends State<StopwatchScreen> {
                         label: 'RESET',
                         onPressed: _reset,
                         color: const Color(0xFF666666),
+                      ),
+
+                      // Lap Button (Flag)
+                      _buildControlButton(
+                        icon: Icons.flag_rounded,
+                        label: 'LAP',
+                        onPressed: _addLap,
+                        color: _isRunning
+                            ? const Color(0xFFFFB300)
+                            : const Color(0xFF666666),
                       ),
 
                       // Start/Pause Button
